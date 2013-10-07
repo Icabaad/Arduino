@@ -232,7 +232,10 @@ void loop() {
   //*****************************************************
   //Serial.print("power....");
 
-  if (Serial1.available()) {
+if (timer >= 30) {
+Serial1.write("S");
+Serial.println("Power Request Sent...");
+ // if (Serial1.available()) {
     for(fieldIndex = 0; fieldIndex  < 3; fieldIndex ++)
     {
       values[fieldIndex] = Serial1.parseInt(); 
@@ -271,7 +274,8 @@ void loop() {
 
     fieldIndex = 0; //reset
     Serial1.flush();
-  }
+//  }
+}
 
   if (timer >= 30) {
 
