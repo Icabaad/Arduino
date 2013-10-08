@@ -1,4 +1,8 @@
 // Sensor Mega! V.001
+// Receives Data from Xbee Coordinator and Serial1 Arduino UNO. 
+// Processes numerous other Sensors and uploads to Xively and local SQL via Rasberry Pi
+// http://www.dangertech.org
+
 #include <SPI.h>
 #include <Ethernet.h>
 #include <HttpClient.h>
@@ -11,12 +15,15 @@
 
 //BMP085 Pressure
 Adafruit_BMP085 bmp;
+
 //DHT22
 #define DHTPIN 5     // what pin we're connected to
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
 DHT dht(DHTPIN, DHTTYPE);
+
 //lux
 TSL2561 tsl(TSL2561_ADDR_LOW);
+
 //xbee
 XBee xbee = XBee();
 ZBRxIoSampleResponse ioSample = ZBRxIoSampleResponse();
@@ -25,6 +32,7 @@ XBeeAddress64 test = XBeeAddress64();
 //ethernet
 byte mac[] = { 
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
 // Your Xively key to let you upload data
 char xivelyKey[] = "8q9hxZHPQggWKsXqPEBZymEHa5Uyfiwv1TrcPXBenKPCsCr7";
 
@@ -73,11 +81,11 @@ int motionPin = 2; // choose the input pin (for PIR sensor)
 int ledPin = 3; //LED
 int timer = 0;
 int hydroLED = 6; //LED that comes on with hotwater/heatpump
+
 //powerserial1
 const int fNumber = 3; //number of fields to recieve in data stream
 int fieldIndex =0; //current field being recieved
 int values[fNumber]; //array holding values
-
 
 //***************************************************
 void setup() {
@@ -144,10 +152,10 @@ void loop() {
     digitalWrite(ledPin, HIGH);
     commsMotion = 1;
   }
-  else {
-    digitalWrite(ledPin, LOW);
-    commsMotion = 0;
-  }
+ // else { //remmed out to turn LED off once motion has been logged online
+ //   digitalWrite(ledPin, LOW);
+ //   commsMotion = 0;
+//  }
   datastreams[0].setInt(commsMotion);
 
   timer ++;
@@ -335,9 +343,13 @@ Serial.println("Power Request Sent...");
     int ret = xivelyclient.put(feed, xivelyKey);
     Serial.print("xivelyclient.put returned ");
     Serial.println(ret);
+
+//reset comms motion switch here to update interval for motion detected not just to update if commsmotion and activity update coincides like old way
+    digitalWrite(ledPin, LOW);
+    commsMotion = 0;
     timer = 0;
     Serial.println();
-    //  delay(100);
+
     /*  //SQL feed
      Serial.print("SQL:");
      Serial.print(datastreams[2].getFloat());
