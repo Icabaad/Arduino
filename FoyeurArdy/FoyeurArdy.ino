@@ -1,6 +1,16 @@
 //Adafruit referenced
+//Awesome examples from http://www.desert-home.com/ used for XBee components <3
 
+#include <xbee.h>
 #include <DHT.h>
+
+//XBEE
+XBee xbee = Xbee();
+// This is the XBee broadcast address.  You can use the address
+// of any device you have also.
+XBeeAddress64 Broadcast = XBeeAddress64(0x00000000, 0x0000ffff);
+char Hello[] = "Hello World\r";
+char Buffer[128];  // this needs to be longer than your longest packet.
 
 //DHT22
 #define DHTPIN 7     // what pin we're connected to
@@ -73,7 +83,15 @@ void loop() {
   Serial.print(",");
   Serial.print(dhTemp);
   Serial.println(",");
-
+*/
+  ZBTxRequest zbtx = ZBTxRequest(Broadcast, (uint8_t *)Hello, strlen(Hello));
+  xbee.send(zbtx);
+  delay(30000);
+  strcpy(Buffer,"I saw what you did last night.\r");
+  zbtx = ZBTxRequest(Broadcast, (uint8_t *)Buffer, strlen(Buffer));
+  xbee.send(zbtx);
+  delay(30000);
+  /*
 
 }
 //********************************eND OF lOOP**********************************
