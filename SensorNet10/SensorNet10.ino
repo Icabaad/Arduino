@@ -91,9 +91,12 @@ int values[fNumber]; //array holding values
 void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
+  //xbee.begin(9600);
  // xbee.begin(9600);
   Serial2.begin(9600);
+
   xbee.setSerial(Serial2);
+
   Serial.println("Starting multiple datastream upload to Xively...");
   Serial.println();
 
@@ -224,6 +227,10 @@ void loop() {
       else if (test == 1082562186) {
         Serial.println("Xbee 2 - Not Processing!");
       }
+      else if (test == 1081730785) {
+        Serial.println("Xbee 3!!!!! - Not Processing!");
+      }
+    
     }
     else {
       Serial.print("Expected I/O Sample, but got ");

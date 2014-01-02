@@ -27,6 +27,7 @@ TSL2561 tsl(TSL2561_ADDR_LOW);
 //xbee
 XBee xbee = XBee();
 ZBRxIoSampleResponse ioSample = ZBRxIoSampleResponse();
+ZBRxResponse rx = ZBRxResponse();
 XBeeAddress64 test = XBeeAddress64();
 
 //ethernet
@@ -79,7 +80,7 @@ XivelyClient xivelyclient(client);
 int sensorPin = 0; //light
 int motionPin = 2; // choose the input pin (for PIR sensor)
 int ledPin = 3; //LED
-int timer = 0;
+long timer = 0;
 int hydroLED = 6; //LED that comes on with hotwater/heatpump
 
 //powerserial1
@@ -139,7 +140,20 @@ void setup() {
   pinMode(hydroLED, OUTPUT);
   digitalWrite(motionPin, LOW);
   digitalWrite(hydroLED, LOW);
+  delay(1000);
+  digitalWrite(motionPin, HIGH);
+  digitalWrite(hydroLED, HIGH);
+  delay(1000);
+  digitalWrite(motionPin, LOW);
+  digitalWrite(hydroLED, LOW);
+  delay(1000);
+  digitalWrite(motionPin, HIGH);
+  digitalWrite(hydroLED, HIGH);
+  delay(1000);
+  digitalWrite(motionPin, LOW);
+  digitalWrite(hydroLED, LOW);
   Serial.println();
+  Serial2.flush();
 }
 
 
@@ -159,14 +173,82 @@ void loop() {
   datastreams[0].setInt(commsMotion);
 
   timer ++;
-  // Serial.println(timer);
-  delay(500);
+ // Serial.println(timer);
+ // delay(10);
   //xbee
   //attempt to read a packet    
   xbee.readPacket();
 
   if (xbee.getResponse().isAvailable()) {
-    if (xbee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
+    Serial.print("Frame Type is ");
+    Serial.println(xbee.getResponse().getApiId(), HEX);
+    if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
+        // got a zb rx packet, the kind this code is looking for
+      
+        // now that you know it's a receive packet
+        // fill in the values
+        xbee.getResponse().getZBRxResponse(rx);
+      
+        // this is how you get the 64 bit address out of
+        // the incoming packet so you know which device
+        // it came from
+        Serial.print("Got an rx packet from: ");
+        XBeeAddress64 senderLongAddress = rx.getRemoteAddress64();
+        print32Bits(senderLongAddress.getMsb());
+        Serial.print(" ");
+        print32Bits(senderLongAddress.getLsb());
+      
+        // this is how to get the sender's
+        // 16 bit address and show it
+        uint16_t senderShortAddress = rx.getRemoteAddress16();
+        Serial.print(" (");
+        print16Bits(senderShortAddress);
+        Serial.println(")");
+      
+        // The option byte is a bit field
+        if (rx.getOption() & ZB_PACKET_ACKNOWLEDGED)
+            // the sender got an ACK
+          Serial.println("packet acknowledged");
+        if (rx.getOption() & ZB_BROADCAST_PACKET)
+          // This was a broadcast packet
+          Serial.println("broadcast Packet");
+        
+        Serial.print("checksum is ");
+        Serial.println(rx.getChecksum(), HEX);
+      
+        // this is the packet length
+        Serial.print("packet length is ");
+        Serial.print(rx.getPacketLength(), DEC);
+      
+        // this is the payload length, probably
+        // what you actually want to use
+        Serial.print(", data payload length is ");
+        Serial.println(rx.getDataLength(),DEC);
+      
+        // this is the actual data you sent
+        Serial.println("Received Data: ");
+        for (int i = 0; i < rx.getDataLength(); i++) {
+          print8Bits(rx.getData()[i]);
+          Serial.print(' ');
+        }
+      
+        // and an ascii representation for those of us
+        // that send text through the XBee
+        Serial.println();
+        for (int i= 0; i < rx.getDataLength(); i++){
+          Serial.write(' ');
+          if (iscntrl(rx.getData()[i]))
+            Serial.write(' ');
+          else
+            Serial.write(rx.getData()[i]);
+          Serial.write(' ');
+        }
+        Serial.println();
+        // So, for example, you could do something like this:
+        handleXbeeRxMessage(rx.getData(), rx.getDataLength());
+        Serial.println();
+      }
+    else if (xbee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
       xbee.getResponse().getZBRxIoSampleResponse(ioSample);
       XBeeAddress64 senderLongAddress = ioSample.getRemoteAddress64();
       Serial.println(senderLongAddress.getLsb());
@@ -240,7 +322,7 @@ void loop() {
   //*****************************************************
   //Serial.print("power....");
 
-if (timer >= 30) {
+if (timer >= 300000) {
 Serial1.write("S");
 Serial.println("Power Request Sent...");
  // if (Serial1.available()) {
@@ -285,7 +367,7 @@ Serial.println("Power Request Sent...");
 //  }
 }
 
-  if (timer >= 30) {
+  if (timer >= 300000) {
 
     float barometerTemp = (bmp.readTemperature());
     Serial.print("Barometer Temperature = ");
@@ -384,8 +466,40 @@ Serial.print(datastreams[2].getFloat());Serial.print(",");Serial.print(datastrea
  datastreams[4].setInt(full);
  datastreams[5].setFloat(temperatureC);
  */
+void handleXbeeRxMessage(uint8_t *data, uint8_t length){
+  // this is just a stub to show how to get the data,
+  // and is where you put your code to do something with
+  // it.
+  for (int i = 0; i < length; i++){
+//    Serial.print(data[i]);
+  }
+//  Serial.println();
+} 
+ 
+void print32Bits(uint32_t dw){
+  print16Bits(dw >> 16);
+  print16Bits(dw & 0xFFFF);
+}
 
 
+void print16Bits(uint16_t w){
+  print8Bits(w >> 8);
+  print8Bits(w & 0x00FF);
+}
+
+void print8Bits(byte c){
+  uint8_t nibble = (c >> 4);
+  if (nibble <= 9)
+    Serial.write(nibble + 0x30);
+  else
+    Serial.write(nibble + 0x37);
+      
+  nibble = (uint8_t) (c & 0x0F);
+  if (nibble <= 9)
+    Serial.write(nibble + 0x30);
+  else
+    Serial.write(nibble + 0x37);
+}
 
 
 
