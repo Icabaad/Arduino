@@ -34,11 +34,12 @@ void setup() {
   Serial.begin(9600);
     SXbee.begin(9600);
     xbee.setSerial(SXbee);
+    delay (5000);
 }
 
 void loop() {
 
-  delay(60000);
+ // delay(60000);
 
   // read the raw value from the sensor:
   int rawValue = analogRead(lightPin);    
@@ -89,14 +90,36 @@ void loop() {
   Serial.print(",");
   Serial.print(dhTemp);
   Serial.println(",");
+  Serial.println();
+  
+  char Buffer2[80];
 
-  ZBTxRequest zbtx = ZBTxRequest(Broadcast, (uint8_t *)Hello, strlen(Hello));
+  dtostrf(lightValue, 4, 2, Buffer);//
+strcpy(Buffer2, Buffer);
+strcat(Buffer2, ","); 
+strcat(Buffer2, dtostrf(hotTMP, 4, 2, Buffer)); 
+strcat(Buffer2, ","); 
+strcat(Buffer2, dtostrf(coldTMP, 4, 2, Buffer)); 
+strcat(Buffer2, ","); 
+strcat(Buffer2, dtostrf(humidity, 4, 2, Buffer)); 
+strcat(Buffer2, ","); 
+strcat(Buffer2, dtostrf(dhTemp, 4, 2, Buffer)); 
+strcat(Buffer2, "\r"); 
+// Buffer = lightValue;
+Serial.println(Buffer2);
+  
+
+    
+  //String sendString =  String(lightValue);     // using an int and a base
+// strcpy(Buffer,light);
+  ZBTxRequest zbtx = ZBTxRequest(Broadcast, (uint8_t *)Buffer2, strlen(Buffer2));
   xbee.send(zbtx);
-  delay(30000);
+  /*delay(30000);
   strcpy(Buffer,"I saw what you did last night.\r");
-  zbtx = ZBTxRequest(Broadcast, (uint8_t *)Buffer, strlen(Buffer));
-  xbee.send(zbtx);
-  delay(30000);
+  zbtx = ZBTxRequest(Broadcast, (uint8_t *)Buffer, strlen(Buffer2));
+  xbee.send(zbtx);*/
+  
+  delay(60000);
   
 
 }
