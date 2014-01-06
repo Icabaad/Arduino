@@ -88,6 +88,8 @@ const int fNumber = 3; //number of fields to recieve in data stream
 int fieldIndex =0; //current field being recieved
 int values[fNumber]; //array holding values
 
+  String xbeeReadString = "";
+
 //***************************************************
 void setup() {
   Serial.begin(9600);
@@ -239,7 +241,10 @@ void loop() {
         // So, for example, you could do something like this:
         handleXbeeRxMessage(rx.getData(), rx.getDataLength());
       
-        Serial.println();
+        Serial.println(xbeeReadString);
+        String tester = xbeeReadString.substring(17, 22);
+        Serial.println(tester);
+        xbeeReadString = " ";
       }
     
     else if (xbee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
@@ -452,6 +457,7 @@ Serial.println("Power Request Sent...");
 
     Serial.println("end");
   }
+
 }
 //}
 /*
@@ -470,8 +476,11 @@ void handleXbeeRxMessage(uint8_t *data, uint8_t length){
   // and is where you put your code to do something with
   // it.
   for (int i = 0; i < length; i++){
-   
-    Serial.print(data[i]);
+ //  char try[80];
+   char xbuff = data[i];
+   xbeeReadString += xbuff;
+//   Serial.print(final,DEC);
+   // Serial.print(data[i]);
   }
   Serial.println();
 }
