@@ -13,7 +13,6 @@ XBee xbee = XBee();
 // This is the XBee broadcast address.  You can use the address
 // of any device you have also.
 XBeeAddress64 Broadcast = XBeeAddress64(0x00000000, 0x0000ffff);
-char Hello[] = "Hello World\r";
 char Buffer[128];  // this needs to be longer than your longest packet.
 
 //DHT22
@@ -24,10 +23,10 @@ DHT dht(DHTPIN, DHTTYPE);
 int lightPin = A2;    // Light Pin
 int hotPin = A0; //Hot Out
 int coldPin = A1; //Cold In
-
+int motionPin = 2; // choose the input pin (for PIR sensor)
 float rawRange = 1024; // 3.3v
 float logRange = 5.0; // 3.3v = 10^5 lux
-
+int commsMotion = 0;
 
 void setup() {
   analogReference(EXTERNAL); //
@@ -35,12 +34,29 @@ void setup() {
     SXbee.begin(9600);
     xbee.setSerial(SXbee);
     delay (5000);
+    
+    pinMode(motionPin, INPUT);     // declare sensor as input
+    attachInterrupt(0,Motion,RISING);
+ Serial.println("Started");
 }
 
 void loop() {
 
- // delay(60000);
+/*
+ delay(100);
+ Serial.println(commsMotion);
+//   Serial.print("Motion Sensor State: "); 
+  int commsMotion = digitalRead(motionPin);
+//  int pirOut = 0;
+  // Serial.println(commsMotion);
+  if (commsMotion == HIGH) {
+  //  commsMotion = 1;
+    Serial.println("Motion2");
+    //   commsMotion = 0;
+  }
 
+  */
+//  }
   // read the raw value from the sensor:
   int rawValue = analogRead(lightPin);    
 
@@ -64,7 +80,7 @@ void loop() {
 
   tmp36 = analogRead(coldPin) * 3.3 / 1024; 
   //  float voltage = reading * 3.3;
-  tmp36 /= 1024.0; 
+  //tmp36 /= 1024.0; 
   //float temperatureC = (coldTMP - 0.5) * 100 ;  //converting from 10 mv per degree wit 500 mV offset
   //to degrees ((voltage - 500mV) times 100)
   float coldTMP = RawToTMP(tmp36);
@@ -79,18 +95,18 @@ void loop() {
   float dhTemp = (dht.readTemperature());
   Serial.println(dhTemp);
 
-  Serial.print("S");
-  Serial.print(lightValue);
-  Serial.print(",");
-  Serial.print(hotTMP);
-  Serial.print(",");
-  Serial.print(coldTMP);
-  Serial.print(",");
-  Serial.print(humidity);
-  Serial.print(",");
-  Serial.print(dhTemp);
-  Serial.println(",");
-  Serial.println();
+ // Serial.print("S");
+//  Serial.print(lightValue);
+ // Serial.print(",");
+ // Serial.print(hotTMP);
+ // Serial.print(",");
+ // Serial.print(coldTMP);
+ // Serial.print(",");
+//  Serial.print(humidity);
+//  Serial.print(",");
+//  Serial.print(dhTemp);
+//  Serial.println(",");
+ // Serial.println();
   
   char Buffer2[80];
 
@@ -104,11 +120,15 @@ strcat(Buffer2, ",");
 strcat(Buffer2, dtostrf(humidity, 4, 2, Buffer)); 
 strcat(Buffer2, ","); 
 strcat(Buffer2, dtostrf(dhTemp, 4, 2, Buffer)); 
+strcat(Buffer2, ","); 
+strcat(Buffer2, dtostrf(commsMotion, 1, 0, Buffer)); 
 strcat(Buffer2, "\r"); 
 // Buffer = lightValue;
 Serial.println(Buffer2);
-  
+Serial.println(Buffer);
 
+ 
+commsMotion = 0;
     
   //String sendString =  String(lightValue);     // using an int and a base
 // strcpy(Buffer,light);
@@ -123,7 +143,9 @@ Serial.println(Buffer2);
   
 
 }
+
 //********************************eND OF lOOP**********************************
+
 float RawToLux(int raw) {
   float logLux = raw * logRange / rawRange;
   return pow(10, logLux);
@@ -136,6 +158,18 @@ float RawToTMP(float tmp36) {
   float tmp = (tmp36 - 0.5) * 100 ;  //converting from 10 mv per degree wit 500 mV offset
   //to degrees ((voltage - 500mV) times 100)
   return tmp;
+}
+// interrupt handler
+
+void Motion() {
+  Serial.println("Motion on!");
+  commsMotion = 1;
+  char Buffer3[40];
+  dtostrf(commsMotion, 1, 0, Buffer);
+  strcpy(Buffer3, Buffer);
+strcat(Buffer3, "\r"); 
+  ZBTxRequest zbtx = ZBTxRequest(Broadcast, (uint8_t *)Buffer3, strlen(Buffer3));
+  xbee.send(zbtx);
 }
 
 
