@@ -204,20 +204,20 @@ void loop() {
         datastreams[5].setFloat(temperatureC);
 
         int vReading = (ioSample.getAnalog(1));
-        float xbee1battery = vReading * 4.2 / 1024;      
+        float xbee1battery = vReading * 4.2 / 1024;     //Batter max voltage 4.2V
         // voltage /= 1024.0; 
         Serial.print(xbee1battery); 
         Serial.println(" Xbee Battery");
         datastreams[7].setFloat(xbee1battery);
 
         int vReading2 = (ioSample.getAnalog(2));
-        float xbee1solar = vReading2 * 9.0 / 1024;      
+        float xbee1solar = vReading2 * 6.0 / 1024;      //Change 6.0 to match max input voltage from source
         // voltage /= 1024.0; 
         Serial.print(xbee1solar); 
         Serial.println(" Xbee Solar");
         datastreams[8].setFloat(xbee1solar);
 
-        int vReading3 = (ioSample.getAnalog(7));
+        int vReading3 = (ioSample.getAnalog(7));  //internal voltage check. Using regulator so always reads the same
         float xbee1v = vReading3 * 1.2 / 1024;      
         // voltage /= 1024.0; 
         Serial.print(xbee1v); 

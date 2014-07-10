@@ -88,17 +88,16 @@ const int fNumber = 3; //number of fields to recieve in data stream
 int fieldIndex =0; //current field being recieved
 int values[fNumber]; //array holding values
 
-  String xbeeReadString = "";
+String xbeeReadString = "";
 
 //***************************************************
 void setup() {
-  Serial.begin(9600);
-  Serial1.begin(9600);
-  //xbee.begin(9600);
- // xbee.begin(9600);
-  Serial2.begin(9600);
+  Serial.begin(9600);  //Debug
+  Serial1.begin(9600); //Currentcost chat
+  Serial2.begin(9600); //Xbee chat
+  Serial3.begin(9600); //Output to pi
 
-  xbee.setSerial(Serial2);
+  xbee.setSerial(Serial2); //sets serial2 to be used for xbee library
 
   Serial.println("Starting SensorNet...");
   Serial.println();
@@ -109,7 +108,7 @@ void setup() {
     Serial.println("Error getting IP address via DHCP, trying again...");
     delay(15000);
   }
-  Serial.print("My IP address: ");
+  Serial.print("IP address: ");
   Ethernet.localIP().printTo(Serial);
   Serial.println();
 
@@ -125,7 +124,7 @@ void setup() {
   //Barometer OK?
   //time for barometer to start up
   Serial.println("Barometer Warmup Phase..."); 
-  delay(2000); 
+  delay(1000); 
   if (!bmp.begin()) {
     Serial.println("Could not find a valid BMP085 sensor, check wiring!");
     while (1) {
@@ -158,95 +157,95 @@ void loop() {
     digitalWrite(ledPin, HIGH);
     commsMotion = 1;
   }
- // else { //remmed out to turn LED off once motion has been logged online
- //   digitalWrite(ledPin, LOW);
- //   commsMotion = 0;
-//  }
+  // else { //remmed out to turn LED off once motion has been logged online
+  //   digitalWrite(ledPin, LOW);
+  //   commsMotion = 0;
+  //  }
   datastreams[0].setInt(commsMotion);
 
   timer ++;
- // Serial.println(timer);
- delay(10);
+  // Serial.println(timer);
+  delay(10);
   //xbee
   //attempt to read a packet    
   xbee.readPacket();
 
   if (xbee.getResponse().isAvailable()) {
-   
+
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
-        // got a zb rx packet, the kind this code is looking for
-      
-        // now that you know it's a receive packet
-        // fill in the values
-        xbee.getResponse().getZBRxResponse(rx);
-      
-        // this is how you get the 64 bit address out of
-        // the incoming packet so you know which device
-        // it came from
-        Serial.print("Got an rx packet from: ");
-        XBeeAddress64 senderLongAddress = rx.getRemoteAddress64();
-        print32Bits(senderLongAddress.getMsb());
-        Serial.print(" ");
-        print32Bits(senderLongAddress.getLsb());
-                
-        // this is how to get the sender's
-        // 16 bit address and show it
-        uint16_t senderShortAddress = rx.getRemoteAddress16();
-        Serial.print(" (");
-        print16Bits(senderShortAddress);
-        Serial.println(")");
-        
-       Serial.println(senderLongAddress.getLsb());
-        uint32_t test = (senderLongAddress.getLsb());  
-      
-        // The option byte is a bit field
-        if (rx.getOption() & ZB_PACKET_ACKNOWLEDGED)
-            // the sender got an ACK
-          Serial.println("packet acknowledged");
-        if (rx.getOption() & ZB_BROADCAST_PACKET)
-          // This was a broadcast packet
-          Serial.println("broadcast Packet");
-        
-        Serial.print("checksum is ");
-        Serial.println(rx.getChecksum(), HEX);
-      
-        // this is the packet length
-        Serial.print("packet length is ");
-        Serial.print(rx.getPacketLength(), DEC);
-      
-        // this is the payload length, probably
-        // what you actually want to use
-        Serial.print(", data payload length is ");
-        Serial.println(rx.getDataLength(),DEC);
-      
-        // this is the actual data you sent
-        Serial.println("Received Data: ");
-        for (int i = 0; i < rx.getDataLength(); i++) {
-          print8Bits(rx.getData()[i]);
-          Serial.print(' ');
-        }
-      
-        // and an ascii representation for those of us
-        // that send text through the XBee
-        Serial.println();
-        for (int i= 0; i < rx.getDataLength(); i++){
-     //     Serial.write(' ');
-          if (iscntrl(rx.getData()[i]));
-     //       Serial.write(' ');
-          else
-            Serial.write(rx.getData()[i]);
-     //     Serial.write(' ');
-        }
-        Serial.println();
-        // So, for example, you could do something like this:
-        handleXbeeRxMessage(rx.getData(), rx.getDataLength());
-      
-        Serial.println(xbeeReadString);
-        String tester = xbeeReadString.substring(17, 22);
-        Serial.println(tester);
-        xbeeReadString = " ";
+      // got a zb rx packet, the kind this code is looking for
+
+      // now that you know it's a receive packet
+      // fill in the values
+      xbee.getResponse().getZBRxResponse(rx);
+
+      // this is how you get the 64 bit address out of
+      // the incoming packet so you know which device
+      // it came from
+      Serial.print("Got an rx packet from: ");
+      XBeeAddress64 senderLongAddress = rx.getRemoteAddress64();
+      print32Bits(senderLongAddress.getMsb());
+      Serial.print(" ");
+      print32Bits(senderLongAddress.getLsb());
+
+      // this is how to get the sender's
+      // 16 bit address and show it
+      uint16_t senderShortAddress = rx.getRemoteAddress16();
+      Serial.print(" (");
+      print16Bits(senderShortAddress);
+      Serial.println(")");
+
+      Serial.println(senderLongAddress.getLsb());
+      uint32_t test = (senderLongAddress.getLsb());  
+
+      // The option byte is a bit field
+      if (rx.getOption() & ZB_PACKET_ACKNOWLEDGED)
+        // the sender got an ACK
+        Serial.println("packet acknowledged");
+      if (rx.getOption() & ZB_BROADCAST_PACKET)
+        // This was a broadcast packet
+        Serial.println("broadcast Packet");
+
+      Serial.print("checksum is ");
+      Serial.println(rx.getChecksum(), HEX);
+
+      // this is the packet length
+      Serial.print("packet length is ");
+      Serial.print(rx.getPacketLength(), DEC);
+
+      // this is the payload length, probably
+      // what you actually want to use
+      Serial.print(", data payload length is ");
+      Serial.println(rx.getDataLength(),DEC);
+
+      // this is the actual data you sent
+      Serial.println("Received Data: ");
+      for (int i = 0; i < rx.getDataLength(); i++) {
+        print8Bits(rx.getData()[i]);
+        Serial.print(' ');
       }
-    
+
+      // and an ascii representation for those of us
+      // that send text through the XBee
+      Serial.println();
+      for (int i= 0; i < rx.getDataLength(); i++){
+        //     Serial.write(' ');
+        if (iscntrl(rx.getData()[i]));
+        //       Serial.write(' ');
+        else
+          Serial.write(rx.getData()[i]);
+        //     Serial.write(' ');
+      }
+      Serial.println();
+      // So, for example, you could do something like this:
+      handleXbeeRxMessage(rx.getData(), rx.getDataLength());
+
+      Serial.println(xbeeReadString);
+      String tester = xbeeReadString.substring(17, 22);
+      Serial.println(tester);
+      xbeeReadString = " ";
+    }
+
     else if (xbee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
       xbee.getResponse().getZBRxIoSampleResponse(ioSample);
       XBeeAddress64 senderLongAddress = ioSample.getRemoteAddress64();
@@ -289,7 +288,7 @@ void loop() {
         datastreams[7].setFloat(xbee1battery);
 
         int vReading2 = (ioSample.getAnalog(2));
-        float xbee1solar = vReading2 * 9.0 / 1024;      
+        float xbee1solar = vReading2 * 6.0 / 1024;      
         // voltage /= 1024.0; 
         Serial.print(xbee1solar); 
         Serial.println(" Xbee Solar");
@@ -305,10 +304,10 @@ void loop() {
       else if (test == 1081730785) {
         Serial.println("Xbee 2 - Not Processing!");
       }
-  /*    else if (test == 1082562186) {
-        Serial.println("Xbee 3!!!!! - Not Processing!");
-      }
-    */
+      /*    else if (test == 1082562186) {
+       Serial.println("Xbee 3!!!!! - Not Processing!");
+       }
+       */
     }
     else {
       Serial.print("Expected I/O Sample, but got ");
@@ -325,10 +324,10 @@ void loop() {
   //*****************************************************
   //Serial.print("power....");
 
-if (timer >= 5000) {
-Serial1.write("S");
-Serial.println("Power Request Sent...");
- // if (Serial1.available()) {
+  if (timer >= 5000) {
+    Serial1.write("S");
+    Serial.println("Power Request Sent...");
+    // if (Serial1.available()) {
     for(fieldIndex = 0; fieldIndex  < 3; fieldIndex ++)
     {
       values[fieldIndex] = Serial1.parseInt(); 
@@ -337,7 +336,7 @@ Serial.println("Power Request Sent...");
     Serial.println(" fields received: ");
     for(int i=0; i <  fieldIndex; i++)
     {
-   //   Serial.println(values[i]);
+      //   Serial.println(values[i]);
       if(values[0]) {
         // Serial.print("totalpower: "); Serial.println(values[0]);
         datastreams[9].setInt(values[0]);
@@ -367,8 +366,8 @@ Serial.println("Power Request Sent...");
 
     fieldIndex = 0; //reset
     Serial1.flush();
-//  }
-}
+    //  }
+  }
 
   if (timer >= 5000) {
 
@@ -424,36 +423,76 @@ Serial.println("Power Request Sent...");
      Serial.println(datastreams[2].getString());
      */
 
+    //SQL feed
+    Serial.println("SQL:");
+//Serial 3 to Pi
+    Serial3.print(datastreams[0].getInt());
+    Serial3.print(",");
+    Serial3.print(datastreams[1].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[2].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[3].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[4].getInt());
+    Serial3.print(",");
+    Serial3.print(datastreams[5].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[6].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[7].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[8].getFloat());
+    Serial3.print(",");
+    Serial3.print(datastreams[9].getInt());
+    Serial3.print(",");
+    Serial3.print(datastreams[10].getInt());
+    Serial3.print(",");
+    Serial3.print(datastreams[11].getInt());
+   // Serial3.print(",");
+   
+ //debug console   
+    Serial.print(datastreams[0].getInt());
+    Serial.print(",");
+    Serial.print(datastreams[1].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[2].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[3].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[4].getInt());
+    Serial.print(",");
+    Serial.print(datastreams[5].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[6].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[7].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[8].getFloat());
+    Serial.print(",");
+    Serial.print(datastreams[9].getInt());
+    Serial.print(",");
+    Serial.print(datastreams[10].getInt());
+    Serial.print(",");
+    Serial.print(datastreams[11].getInt());
+    Serial.println("");
+    //Serial3.println(dht.readTemperature());
+    //  delay(60000);
+    Serial.println("SQL Injected!");
+    //timer = 0;
+
     Serial.println("Uploading it to Xively");
     int ret = xivelyclient.put(feed, xivelyKey);
     Serial.print("xivelyclient.put returned ");
     Serial.println(ret);
 
-//reset comms motion switch here to update interval for motion detected not just to update if commsmotion and activity update coincides like old way
+    //reset comms motion switch here to update interval for motion detected not just to update if commsmotion and activity update coincides like old way
     digitalWrite(ledPin, LOW);
     commsMotion = 0;
     timer = 0;
     Serial.println();
 
-    /*  //SQL feed
-     Serial.print("SQL:");
-     Serial.print(datastreams[2].getFloat());
-     Serial.print(",");
-     Serial.print(datastreams[3].getFloat());
-     Serial.print(",");
-     Serial.print(datastreams[4].getInt());
-     Serial.print(",");
-     Serial.print(datastreams[0].getInt());
-     Serial.print(",");
-     Serial.print(datastreams[1].getFloat());
-     Serial.print(",");
-     Serial.print(datastreams[5].getFloat());
-     Serial.print(",");
-     Serial.print(dht.readTemperature());
-     //  delay(60000);
-     Serial.println();
-     timer = 0;
-     */
+
 
     Serial.println("end");
   }
@@ -476,11 +515,11 @@ void handleXbeeRxMessage(uint8_t *data, uint8_t length){
   // and is where you put your code to do something with
   // it.
   for (int i = 0; i < length; i++){
- //  char try[80];
-   char xbuff = data[i];
-   xbeeReadString += xbuff;
-//   Serial.print(final,DEC);
-   // Serial.print(data[i]);
+    //  char try[80];
+    char xbuff = data[i];
+    xbeeReadString += xbuff;
+    //   Serial.print(final,DEC);
+    // Serial.print(data[i]);
   }
   Serial.println();
 }
@@ -522,13 +561,14 @@ void print8Bits(byte c){
     Serial.write(nibble + 0x30);
   else
     Serial.write(nibble + 0x37);
-      
+
   nibble = (uint8_t) (c & 0x0F);
   if (nibble <= 9)
     Serial.write(nibble + 0x30);
   else
     Serial.write(nibble + 0x37);
 }
+
 
 
 
