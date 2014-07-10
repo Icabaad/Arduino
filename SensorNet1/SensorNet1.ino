@@ -149,18 +149,13 @@ void setup() {
 
 
 void loop() {
-  // Serial.print("Motion Sensor State: "); 
+
   int commsMotion = digitalRead(motionPin);
   int pirOut = 0;
-  // Serial.println(commsMotion);
   if (commsMotion == HIGH) {
     digitalWrite(ledPin, HIGH);
     commsMotion = 1;
   }
-  // else { //remmed out to turn LED off once motion has been logged online
-  //   digitalWrite(ledPin, LOW);
-  //   commsMotion = 0;
-  //  }
   datastreams[0].setInt(commsMotion);
 
   timer ++;
@@ -171,10 +166,8 @@ void loop() {
   xbee.readPacket();
 
   if (xbee.getResponse().isAvailable()) {
-
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
       // got a zb rx packet, the kind this code is looking for
-
       // now that you know it's a receive packet
       // fill in the values
       xbee.getResponse().getZBRxResponse(rx);
@@ -222,9 +215,8 @@ void loop() {
       Serial.println("Received Data: ");
       for (int i = 0; i < rx.getDataLength(); i++) {
         print8Bits(rx.getData()[i]);
-        Serial.print(' ');
+        Serial.print(" ");
       }
-
       // and an ascii representation for those of us
       // that send text through the XBee
       Serial.println();
@@ -301,13 +293,14 @@ void loop() {
         Serial.println(" Xbee Voltage");
         datastreams[6].setFloat(xbee1v);
       }
-      else if (test == 1081730785) {
-        Serial.println("Xbee 2 - Not Processing!");
-      }
-      /*    else if (test == 1082562186) {
-       Serial.println("Xbee 3!!!!! - Not Processing!");
-       }
-       */
+//      else if (test == 1081730785) {
+//        Serial.println("Xbee 2 - Not Processing!");
+//      }
+      
+      //this is else causes code to not upload properly.....????
+//      else if (test == 1082562186) {
+//        Serial.println("Xbee 3!!!!! - Not Processing!");
+//      }
     }
     else {
       Serial.print("Expected I/O Sample, but got ");
@@ -320,12 +313,13 @@ void loop() {
   }
   //  else {
   //*****************************************************
-  //         Power reciept
+  //         Power receipt
   //*****************************************************
   //Serial.print("power....");
 
   if (timer >= 5000) {
     Serial1.write("S");
+    Serial.println();
     Serial.println("Power Request Sent...");
     // if (Serial1.available()) {
     for(fieldIndex = 0; fieldIndex  < 3; fieldIndex ++)
@@ -363,6 +357,7 @@ void loop() {
     Serial.println(values[1]);
     Serial.print("lightsandpowah: "); 
     Serial.println(values[2]);
+    Serial.println();
 
     fieldIndex = 0; //reset
     Serial1.flush();
@@ -410,22 +405,9 @@ void loop() {
     Serial.print("totalpower: "); 
     Serial.println(values[0]);
 
-    /*
-  datastreams[1].setBuffer("Comms Motion");
-     Serial.print("Setting buffer value to:\n    ");
-     Serial.println(datastreams[1].getBuffer());
-     
-     // Pick a random number to send up in a string
-     String stringValue(random(100));
-     stringValue += " is a random number";
-     datastreams[2].setString(stringValue);
-     Serial.print("Setting string value to:\n    ");
-     Serial.println(datastreams[2].getString());
-     */
-
     //SQL feed
     Serial.println("SQL:");
-//Serial 3 to Pi
+    //Serial 3 to Pi
     Serial3.print(datastreams[0].getInt());
     Serial3.print(",");
     Serial3.print(datastreams[1].getFloat());
@@ -449,9 +431,9 @@ void loop() {
     Serial3.print(datastreams[10].getInt());
     Serial3.print(",");
     Serial3.print(datastreams[11].getInt());
-   // Serial3.print(",");
-   
- //debug console   
+    // Serial3.print(",");
+
+    //debug console   
     Serial.print(datastreams[0].getInt());
     Serial.print(",");
     Serial.print(datastreams[1].getFloat());
@@ -475,11 +457,9 @@ void loop() {
     Serial.print(datastreams[10].getInt());
     Serial.print(",");
     Serial.print(datastreams[11].getInt());
-    Serial.println("");
-    //Serial3.println(dht.readTemperature());
-    //  delay(60000);
+    Serial.println();
     Serial.println("SQL Injected!");
-    //timer = 0;
+    Serial.println();
 
     Serial.println("Uploading it to Xively");
     int ret = xivelyclient.put(feed, xivelyKey);
@@ -491,24 +471,9 @@ void loop() {
     commsMotion = 0;
     timer = 0;
     Serial.println();
-
-
-
     Serial.println("end");
   }
-
 }
-//}
-/*
-Serial.print(datastreams[2].getFloat());Serial.print(",");Serial.print(datastreams[3].getFloat());Serial.print(",");Serial.print(datastreams[4].getInt());Serial.print(",");Serial.print(datastreams[0].getInt());Serial.print(",");Serial.print(datastreams[1].getFloat());Serial.print(",");Serial.print(datastreams[5].getFloat());Serial.print(",");Serial.print(dht.readTemperature());
- 
- datastreams[0].setInt(commsMotion);
- datastreams[1].setFloat(barometerTemp);
- datastreams[2].setFloat(barometerPressure);
- datastreams[3].setFloat(dht.readHumidity());
- datastreams[4].setInt(full);
- datastreams[5].setFloat(temperatureC);
- */
 
 void handleXbeeRxMessage(uint8_t *data, uint8_t length){
   // this is just a stub to show how to get the data,
@@ -568,6 +533,7 @@ void print8Bits(byte c){
   else
     Serial.write(nibble + 0x37);
 }
+
 
 
 
